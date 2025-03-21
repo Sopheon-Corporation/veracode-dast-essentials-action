@@ -39,8 +39,11 @@ inputs:
   AUTH_URL:
     description: 'Authentication URL of the Token'
     required: false
-  IEDISON_SYSTEM_ACCOUNT:
-    description: 'iEdison System Account'
+  SYSTEM_ACCOUNT:
+    description: 'System Account for Header Value'
+    required: false
+  SYSTEM_ACCOUNT_NAME:
+    description: 'System Account Name for Header'
     required: false
 runs:
   using: 'node12'

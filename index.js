@@ -15,7 +15,8 @@ const clientId = core.getInput('CLIENT_ID');
 const clientSecret = core.getInput('CLIENT_SECRET');
 const authUrl = core.getInput('AUTH_URL');
 const scope = core.getInput('AUTH_SCOPE');
-const iedisonSystemAccount = core.getInput('IEDISON_SYSTEM_ACCOUNT');
+const headerSystemAccount = core.getInput('SYSTEM_ACCOUNT');
+const headerSystemAccountName = core.getInput('SYSTEM_ACCOUNT_NAME');
 
 const preFix = "VERACODE-HMAC-SHA-256";
 const verStr = "vcode_request_version_1";
@@ -118,10 +119,10 @@ async function run() {
                         "value": "Bearer " + token
                     },
                     {
-                        "title": "iEdisonAccount",
+                        "title": "SystemAccount",
                         "type": "HTTP_HEADER",
-                        "key": "x-iedison-system-account",
-                        "value": iedisonSystemAccount
+                        "key": headerSystemAccountName,
+                        "value": headerSystemAccount
                     }
                 ]
                 const response = await axios.put("https://"+`${host}${url}`, data, {headers: {'Authorization': VERACODE_AUTH_HEADER}});
