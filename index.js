@@ -90,7 +90,7 @@ async function run() {
             }
             try {
                 let profileUrl = urlTCSPrefix + "/analysis_profiles?target_id=" + targetid;
-                let authHeaderAnalysisProfile = await generateHeader(profileUrl, method);
+                let authHeaderAnalysisProfile = await generateHeader(profileUrl, "GET");
                 const anaylsisResponse = await axios.get("https://"+`${host}${profileUrl}`, {headers: {'Authorization': authHeaderAnalysisProfile}});
 
                 // Get the access token
