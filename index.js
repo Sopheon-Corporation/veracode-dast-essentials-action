@@ -142,11 +142,12 @@ async function run() {
             }
         }
 
-        console.log(`Sending Webhook to URL ${host}${url} for ${veracodeWebhook}`);
+        console.log(`Sending Webhook to URL ${host}${urlCorePrefix} for ${veracodeWebhook}`);
 
         // Start the Security Scan
         try {
-            let VERACODE_AUTH_HEADER = await generateHeader(urlCorePrefix + "/" + veracodeWebhook, "POST");
+            let url = urlCorePrefix + "/" + veracodeWebhook + "/scan";
+            let VERACODE_AUTH_HEADER = await generateHeader(url, "POST");
             const response = await axios.post("https://"+`${host}${url}`, "", {headers: {'Authorization': VERACODE_AUTH_HEADER}});
             scanId = response.data.data.scanId;
         } catch(error) {
