@@ -82,36 +82,30 @@ async function run() {
         const pollTimeout = 60000; // Polling the scan status every 60 seconds
         let status = 100; // 100 = Queued
         let scanId = undefined;
-        let url = "";
-        let VERACODE_AUTH_HEADER = "";
-        let token = "";
-        let method = "GET";
 
         if(authType === "CLIENT_CREDENTIALS") {
             if(!clientId || !clientSecret || !authUrl || !scope || !headerSystemAccount || !headerSystemAccountName || !targetid) {
                 core.setFailed(`Please provide all necessary parameters for the Client Credentials Auth Type.`);
                 return
             }
-
-            url = urlTCSPrefix + "/analysis_profiles?target_id=" + targetid;
-            VERACODE_AUTH_HEADER = await generateHeader(url, method);
-            const anaylsisResponse = await axios.get("https://"+`${host}${url}`, {headers: {'Authorization': VERACODE_AUTH_HEADER}});
-
-            // Get the access token
-            let data = `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}&scope=${scope}`;
-            let headers = {
-                "Content-Type": "application/x-www-form-urlencoded"
-            }
-
-            const tokenResponse = await axios.post("https://"+`${authUrl}/token`, data, {headers: headers});
-            token = tokenResponse.data.access_token;
-            
-            // set anaylsis profile parameters
             try {
-                method = "PUT";
-                url = urlTCSPrefix + "/analysis_profiles/" + anaylsisResponse.data._embedded.analysis_profiles[0].analysis_profile_id + "/parameter_authentications";
-                VERACODE_AUTH_HEADER = await generateHeader(url, method);
-                let data = [
+                let profileUrl = urlTCSPrefix + "/analysis_profiles?target_id=" + targetid;
+                let authHeaderAnalysisProfile = await generateHeader(profileUrl, method);
+                const anaylsisResponse = await axios.get("https://"+`${host}${profileUrl}`, {headers: {'Authorization': authHeaderAnalysisProfile}});
+
+                // Get the access token
+                let clientData = `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}&scope=${scope}`;
+                let headers = {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                }
+
+                const tokenResponse = await axios.post("https://"+`${authUrl}/token`, clientData, {headers: headers});
+                let token = tokenResponse.data.access_token;
+                
+                // set anaylsis profile parameters            
+                let parameterUrl = urlTCSPrefix + "/analysis_profiles/" + anaylsisResponse.data._embedded.analysis_profiles[0].analysis_profile_id + "/parameter_authentications";
+                let parameterHeaderAnalysisProfile = await generateHeader(parameterUrl, "PUT");
+                let paramData = [
                     {
                         "title": "Auth",
                         "type": "HTTP_HEADER",
@@ -125,7 +119,7 @@ async function run() {
                         "value": headerSystemAccount
                     }
                 ]
-                const response = await axios.put("https://"+`${host}${url}`, data, {headers: {'Authorization': VERACODE_AUTH_HEADER}});
+                const response = await axios.put("https://"+`${host}${parameterUrl}`, paramData, {headers: {'Authorization': parameterHeaderAnalysisProfile}});
             } catch(error) {
                 errorMsg = error.toString()
                 core.setFailed(`Could not set parameter authentications. Reason: ${errorMsg}.`);
@@ -137,9 +131,7 @@ async function run() {
 
         // Start the Security Scan
         try {
-            method = "POST";
-            url = urlCorePrefix + "/" + veracodeWebhook;
-            VERACODE_AUTH_HEADER = await generateHeader(url, method);
+            let VERACODE_AUTH_HEADER = await generateHeader(urlCorePrefix + "/" + veracodeWebhook, "POST");
             const response = await axios.post("https://"+`${host}${url}`, "", {headers: {'Authorization': VERACODE_AUTH_HEADER}});
             scanId = response.data.data.scanId;
         } catch(error) {
