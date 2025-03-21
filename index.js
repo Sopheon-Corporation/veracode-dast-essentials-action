@@ -88,11 +88,18 @@ async function run() {
                 core.setFailed(`Please provide all necessary parameters for the Client Credentials Auth Type.`);
                 return
             }
+            
             try {
                 let profileUrl = urlTCSPrefix + "/analysis_profiles?target_id=" + targetid;
                 let authHeaderAnalysisProfile = await generateHeader(profileUrl, "GET");
                 const anaylsisResponse = await axios.get("https://"+`${host}${profileUrl}`, {headers: {'Authorization': authHeaderAnalysisProfile}});
-
+            } catch(error) {
+                errorMsg = error.toString()
+                core.setFailed(`Could not get analysis profile. Reason: ${errorMsg}.`);
+                return
+            }
+            
+            try{
                 // Get the access token
                 let clientData = `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}&scope=${scope}`;
                 let headers = {
@@ -101,7 +108,13 @@ async function run() {
 
                 const tokenResponse = await axios.post("https://"+`${authUrl}/token`, clientData, {headers: headers});
                 let token = tokenResponse.data.access_token;
-                
+            } catch(error) {
+                errorMsg = error.toString()
+                core.setFailed(`Could not get token. Reason: ${errorMsg}.`);
+                return
+            }
+
+            try {
                 // set anaylsis profile parameters            
                 let parameterUrl = urlTCSPrefix + "/analysis_profiles/" + anaylsisResponse.data._embedded.analysis_profiles[0].analysis_profile_id + "/parameter_authentications";
                 let parameterHeaderAnalysisProfile = await generateHeader(parameterUrl, "PUT");
