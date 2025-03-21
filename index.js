@@ -82,17 +82,19 @@ async function run() {
         const pollTimeout = 60000; // Polling the scan status every 60 seconds
         let status = 100; // 100 = Queued
         let scanId = undefined;
+        let anaylsisResponse;
+        let token = '';
 
         if(authType === "CLIENT_CREDENTIALS") {
             if(!clientId || !clientSecret || !authUrl || !scope || !headerSystemAccount || !headerSystemAccountName || !targetid) {
                 core.setFailed(`Please provide all necessary parameters for the Client Credentials Auth Type.`);
                 return
             }
-            
+
             try {
                 let profileUrl = urlTCSPrefix + "/analysis_profiles?target_id=" + targetid;
                 let authHeaderAnalysisProfile = await generateHeader(profileUrl, "GET");
-                const anaylsisResponse = await axios.get("https://"+`${host}${profileUrl}`, {headers: {'Authorization': authHeaderAnalysisProfile}});
+                anaylsisResponse = await axios.get("https://"+`${host}${profileUrl}`, {headers: {'Authorization': authHeaderAnalysisProfile}});
             } catch(error) {
                 errorMsg = error.toString()
                 core.setFailed(`Could not get analysis profile. Reason: ${errorMsg}.`);
@@ -107,7 +109,7 @@ async function run() {
                 }
 
                 const tokenResponse = await axios.post("https://"+`${authUrl}/token`, clientData, {headers: headers});
-                let token = tokenResponse.data.access_token;
+                token = tokenResponse.data.access_token;
             } catch(error) {
                 errorMsg = error.toString()
                 core.setFailed(`Could not get token. Reason: ${errorMsg}.`);
