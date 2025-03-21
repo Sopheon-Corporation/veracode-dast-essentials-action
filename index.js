@@ -9,12 +9,20 @@ const id = core.getInput('VERACODE_SECRET_ID');
 const key = core.getInput('VERACODE_SECRET_ID_KEY');
 const region = core.getInput('REGION');
 const pullReport = core.getInput('pull-report');
+const targetid = core.getInput('VERACODE_TARGET_ID');
+const authType = core.getInput('AUTH_TYPE');
+const clientId = core.getInput('CLIENT_ID');
+const clientSecret = core.getInput('CLIENT_SECRET');
+const authUrl = core.getInput('AUTH_URL');
+const scope = core.getInput('AUTH_SCOPE');
+const iedisonSystemAccount = core.getInput('IEDISON_SYSTEM_ACCOUNT');
 
 const preFix = "VERACODE-HMAC-SHA-256";
 const verStr = "vcode_request_version_1";
 
 let host = "api.veracode.com";
-let urlPrefix = "/dae/api/core-api/webhook";
+let urlCorePrefix = "/dae/api/core-api/webhook";
+let urlTCSPrefix = "/dae/api/tcs-api/api/v1";
 
 if(region === "eu") {
     host = "api.veracode.eu";
@@ -73,14 +81,64 @@ async function run() {
         const pollTimeout = 60000; // Polling the scan status every 60 seconds
         let status = 100; // 100 = Queued
         let scanId = undefined;
-        let url = urlPrefix+"/"+veracodeWebhook;
+        let url = "";
+        let VERACODE_AUTH_HEADER = "";
+        let token = "";
+        let method = "GET";
+
+        if(authType === "CLIENT_CREDENTIALS") {
+            if(!clientId || !clientSecret || !authUrl || !scope || !iedisonSystemAccount || !targetid) {
+                core.setFailed(`Please provide all necessary parameters for the Client Credentials Auth Type.`);
+                return
+            }
+
+            url = urlTCSPrefix + "/analysis_profiles?target_id=" + targetid;
+            VERACODE_AUTH_HEADER = await generateHeader(url, method);
+            const anaylsisResponse = await axios.get("https://"+`${host}${url}`, {headers: {'Authorization': VERACODE_AUTH_HEADER}});
+
+            // Get the access token
+            let data = `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}&scope=${scope}`;
+            let headers = {
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+
+            const tokenResponse = await axios.post("https://"+`${authUrl}/token`, data, {headers: headers});
+            token = tokenResponse.data.access_token;
+            
+            // set anaylsis profile parameters
+            try {
+                method = "PUT";
+                url = urlTCSPrefix + "/analysis_profiles/" + anaylsisResponse.data._embedded.analysis_profiles[0].analysis_profile_id + "/parameter_authentications";
+                VERACODE_AUTH_HEADER = await generateHeader(url, method);
+                let data = [
+                    {
+                        "title": "Auth",
+                        "type": "HTTP_HEADER",
+                        "key": "Authorization",
+                        "value": "Bearer " + token
+                    },
+                    {
+                        "title": "iEdisonAccount",
+                        "type": "HTTP_HEADER",
+                        "key": "x-iedison-system-account",
+                        "value": iedisonSystemAccount
+                    }
+                ]
+                const response = await axios.put("https://"+`${host}${url}`, data, {headers: {'Authorization': VERACODE_AUTH_HEADER}});
+            } catch(error) {
+                errorMsg = error.toString()
+                core.setFailed(`Could not set parameter authentications. Reason: ${errorMsg}.`);
+                return
+            }
+        }
 
         console.log(`Sending Webhook to URL ${host}${url} for ${veracodeWebhook}`);
 
         // Start the Security Scan
         try {
-            let method = "POST";
-            let VERACODE_AUTH_HEADER = await generateHeader(url, method);
+            method = "POST";
+            url = urlCorePrefix + "/" + veracodeWebhook;
+            VERACODE_AUTH_HEADER = await generateHeader(url, method);
             const response = await axios.post("https://"+`${host}${url}`, "", {headers: {'Authorization': VERACODE_AUTH_HEADER}});
             scanId = response.data.data.scanId;
         } catch(error) {

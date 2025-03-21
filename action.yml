@@ -21,6 +21,27 @@ inputs:
     description: 'Flag whether the report should be downloaded as JUnit XML file'
     required: false
     default: 'false'
+  VERACODE_TARGET_ID:
+    description: 'Target ID of the DAST Essentials Scan Target'
+    required: false
+  AUTH_TYPE:
+    description: 'Authentication type of the Token'
+    required: true
+  CLIENT_ID:
+    description: 'Client ID of the Token'
+    required: false
+  CLIENT_SECRET:
+    description: 'Client Secret of the Token'
+    required: false
+  AUTH_SCOPE:
+    description: 'Scope of the Token'
+    required: false
+  AUTH_URL:
+    description: 'Authentication URL of the Token'
+    required: false
+  IEDISON_SYSTEM_ACCOUNT:
+    description: 'iEdison System Account'
+    required: false
 runs:
   using: 'node12'
   main: 'index.js'
