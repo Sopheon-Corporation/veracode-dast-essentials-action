@@ -134,6 +134,7 @@ async function run() {
                         "value": headerSystemAccount
                     }
                 ]
+                console.log('Updating auth parameters for analysis profile');
                 const response = await axios.put("https://"+`${host}${parameterUrl}`, paramData, {headers: {'Authorization': parameterHeaderAnalysisProfile}});
             } catch(error) {
                 errorMsg = error.toString()
@@ -146,10 +147,10 @@ async function run() {
 
         // Start the Security Scan
         try {
-            let url = urlCorePrefix + "/" + veracodeWebhook + "/scan";
+            let url = urlTCSPrefix + "/analysis_run";
             let VERACODE_AUTH_HEADER = await generateHeader(url, "POST");
-            const response = await axios.post("https://"+`${host}${url}`, "", {headers: {'Authorization': VERACODE_AUTH_HEADER}});
-            scanId = response.data.data.scanId;
+            const response = await axios.post("https://"+`${host}${url}`, {id: targetid}, {headers: {'Authorization': VERACODE_AUTH_HEADER}});
+            scanId = response.data.id;
         } catch(error) {
             errorMsg = error.toString()
             core.setFailed(`Could not start Scan for Webhook ${veracodeWebhook}. Reason: ${errorMsg}.`);
