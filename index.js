@@ -205,8 +205,8 @@ async function run() {
             let url = urlCorePrefix+"/"+`${veracodeWebhook}/scans/${scanId}/report/pdf`;
             let VERACODE_AUTH_HEADER = await generateHeader(url, method);
 
-            const response = await axios.get("https://"+`${host}${url}`, {headers: {'Authorization': VERACODE_AUTH_HEADER}})
-            junitReport = response.data;
+            const response = await axios.get("https://"+`${host}${url}`, {headers: {'Authorization': VERACODE_AUTH_HEADER, responseType: 'arraybuffer'}});
+            junitReport = Buffer.from(response.data, 'binary');
         } catch(error) {
             errorMsg = error.response.data.message
             core.setFailed(`Downloading Report failed for Webhook ${veracodeWebhook}. Reason: ${errorMsg}.`);
