@@ -181,7 +181,7 @@ async function run() {
             // Refresh status
             try {
                 let method = "GET";
-                let url = urlPrefix+"/"+`${veracodeWebhook}/scans/${scanId}/status`;
+                let url = urlCorePrefix+"/"+`${veracodeWebhook}/scans/${scanId}/status`;
 
                 let VERACODE_AUTH_HEADER = await generateHeader(url, method);
                 const response = await axios.get("https://"+`${host}${url}`, {headers: {'Authorization': VERACODE_AUTH_HEADER}});
@@ -200,7 +200,7 @@ async function run() {
         let junitReport = undefined;
         try {
             let method = "GET";
-            let url = urlPrefix+"/"+`${veracodeWebhook}/scans/${scanId}/report/junit`;
+            let url = urlCorePrefix+"/"+`${veracodeWebhook}/scans/${scanId}/report/junit`;
             let VERACODE_AUTH_HEADER = await generateHeader(url, method);
 
             const response = await axios.get("https://"+`${host}${url}`, {headers: {'Authorization': VERACODE_AUTH_HEADER}})
