@@ -82,6 +82,7 @@ async function run() {
         const pollTimeout = 60000; // Polling the scan status every 60 seconds
         let status = 100; // 100 = Queued
         let scanId = undefined;
+        let scanNumber = undefined;
         let anaylsisResponse;
         let token = '';
 
@@ -151,6 +152,7 @@ async function run() {
             let VERACODE_AUTH_HEADER = await generateHeader(url, "POST");
             const response = await axios.post("https://"+`${host}${url}`, {id: targetid}, {headers: {'Authorization': VERACODE_AUTH_HEADER}});
             scanId = response.data.id;
+            scanNumber = response.data.scan_number;
         } catch(error) {
             errorMsg = error.toString()
             core.setFailed(`Could not start Scan for Webhook ${veracodeWebhook}. Reason: ${errorMsg}.`);
@@ -200,7 +202,7 @@ async function run() {
         let junitReport = undefined;
         try {
             let method = "GET";
-            let url = urlCorePrefix+"/"+`${veracodeWebhook}/scans/${scanId}/report/junit`;
+            let url = urlCorePrefix+"/"+`${veracodeWebhook}/scans/${scanId}/report/pdf`;
             let VERACODE_AUTH_HEADER = await generateHeader(url, method);
 
             const response = await axios.get("https://"+`${host}${url}`, {headers: {'Authorization': VERACODE_AUTH_HEADER}})
@@ -211,13 +213,14 @@ async function run() {
             return
         }
 
-        fs.writeFile('report.xml', junitReport, function(error) {
+        fs.writeFile('report.pdf', junitReport, function(error) {
             if (error) {
                 core.setFailed(`Writing the Report failed for Webhook ${veracodeWebhook}. Reason: ${error}`);
             }
         });
 
-        console.log('Downloaded Report to report.xml');
+        console.log('Downloaded Report to report.pdf');
+        console.log('Link back to veracode scan: https://ui.analysiscenter.veracode.com/app/dae/targets/' + targetid + '/scans/' + scanNumber);
 
     } catch (error) {
         core.setFailed(error.message);
