@@ -193,31 +193,21 @@ async function run() {
                 core.setFailed(`Retreiving Scan Status failed for Webhook ${veracodeWebhook}. Reason: ${errorMsg}.`);
                 return
             }
-
         }
 
         console.log(`Scan finished with status ${status}.`)
 
-        // Download the JUnit Report
-        let junitReport = undefined;
+        // Download the PDF Report
         try {
             let method = "GET";
             let url = urlCorePrefix+"/"+`${veracodeWebhook}/scans/${scanId}/report/pdf`;
             let VERACODE_AUTH_HEADER = await generateHeader(url, method);
             const downloadResponse = await downloadFile("https://"+`${host}${url}`, {'Authorization': VERACODE_AUTH_HEADER}, "report.pdf");
-            //const response = await axios.get("https://"+`${host}${url}`, {headers: {'Authorization': VERACODE_AUTH_HEADER, responseType: 'arraybuffer'}});
-            //junitReport = Buffer.from(response.data, 'binary');
         } catch(error) {
-            errorMsg = error.response.data.message
+            let errorMsg = error.message
             core.setFailed(`Downloading Report failed for Webhook ${veracodeWebhook}. Reason: ${errorMsg}.`);
             return
         }
-
-        // fs.writeFile('report.pdf', junitReport, function(error) {
-        //     if (error) {
-        //         core.setFailed(`Writing the Report failed for Webhook ${veracodeWebhook}. Reason: ${error}`);
-        //     }
-        // });
 
         console.log('Downloaded Report to report.pdf');
         console.log('Link back to veracode scan: https://ui.analysiscenter.veracode.com/app/dae/targets/' + targetid + '/scans/' + scanNumber);
@@ -230,7 +220,7 @@ async function run() {
 
 // https://stackoverflow.com/questions/55374755/node-js-axios-download-file-stream-and-writefile
 async function downloadFile(fileUrl, headers, outputLocationPath) {
-  const writer = createWriteStream(outputLocationPath);
+  const writer = fs.createWriteStream(outputLocationPath);
   return axios({
     method: 'get',
     url: fileUrl,
