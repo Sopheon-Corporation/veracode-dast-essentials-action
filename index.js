@@ -204,20 +204,20 @@ async function run() {
             let method = "GET";
             let url = urlCorePrefix+"/"+`${veracodeWebhook}/scans/${scanId}/report/pdf`;
             let VERACODE_AUTH_HEADER = await generateHeader(url, method);
-
-            const response = await axios.get("https://"+`${host}${url}`, {headers: {'Authorization': VERACODE_AUTH_HEADER, responseType: 'arraybuffer'}});
-            junitReport = Buffer.from(response.data, 'binary');
+            const downloadResponse = await downloadFile("https://"+`${host}${url}`, {'Authorization': VERACODE_AUTH_HEADER}, "report.pdf");
+            //const response = await axios.get("https://"+`${host}${url}`, {headers: {'Authorization': VERACODE_AUTH_HEADER, responseType: 'arraybuffer'}});
+            //junitReport = Buffer.from(response.data, 'binary');
         } catch(error) {
             errorMsg = error.response.data.message
             core.setFailed(`Downloading Report failed for Webhook ${veracodeWebhook}. Reason: ${errorMsg}.`);
             return
         }
 
-        fs.writeFile('report.pdf', junitReport, function(error) {
-            if (error) {
-                core.setFailed(`Writing the Report failed for Webhook ${veracodeWebhook}. Reason: ${error}`);
-            }
-        });
+        // fs.writeFile('report.pdf', junitReport, function(error) {
+        //     if (error) {
+        //         core.setFailed(`Writing the Report failed for Webhook ${veracodeWebhook}. Reason: ${error}`);
+        //     }
+        // });
 
         console.log('Downloaded Report to report.pdf');
         console.log('Link back to veracode scan: https://ui.analysiscenter.veracode.com/app/dae/targets/' + targetid + '/scans/' + scanNumber);
@@ -226,6 +226,32 @@ async function run() {
         core.setFailed(error.message);
         return
     }
+}
+
+// https://stackoverflow.com/questions/55374755/node-js-axios-download-file-stream-and-writefile
+async function downloadFile(fileUrl, headers, outputLocationPath) {
+  const writer = createWriteStream(outputLocationPath);
+  return axios({
+    method: 'get',
+    url: fileUrl,
+    headers: headers,
+    responseType: 'stream',
+  }).then(response => {
+    return new Promise((resolve, reject) => {
+        response.data.pipe(writer);
+        let error = null;
+        writer.on('error', err => {
+          error = err;
+          writer.close();
+          reject(err);
+        });
+        writer.on('close', () => {
+          if (!error) {
+            resolve(true);
+          }
+        });
+      });
+  });
 }
 
 run();
