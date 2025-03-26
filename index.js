@@ -133,6 +133,12 @@ async function run() {
                         "type": "HTTP_HEADER",
                         "key": headerSystemAccountName,
                         "value": headerSystemAccount
+                    },
+                    {
+                        "title": "ScanHeader",
+                        "type": "HTTP_HEADER",
+                        "key": "x-veracode-scan",
+                        "value": "true"
                     }
                 ]
                 console.log('Updating auth parameters for analysis profile');
