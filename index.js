@@ -87,7 +87,7 @@ async function run() {
         let token = '';
 
         if(authType === "CLIENT_CREDENTIALS") {
-            if(!clientId || !clientSecret || !authUrl || !scope || !headerSystemAccount || !headerSystemAccountName || !targetid) {
+            if(!clientId || !clientSecret || !authUrl || !scope || !targetid) {
                 core.setFailed(`Please provide all necessary parameters for the Client Credentials Auth Type.`);
                 return
             }
