@@ -15,8 +15,8 @@ const clientId = core.getInput('CLIENT_ID');
 const clientSecret = core.getInput('CLIENT_SECRET');
 const authUrl = core.getInput('AUTH_URL');
 const scope = core.getInput('AUTH_SCOPE');
-const headerSystemAccount = core.getInput('SYSTEM_ACCOUNT');
-const headerSystemAccountName = core.getInput('SYSTEM_ACCOUNT_NAME');
+const headerSystemAccount = core.getInput('SYSTEM_ACCOUNT', { required: false, default: undefined });
+const headerSystemAccountName = core.getInput('SYSTEM_ACCOUNT_NAME', { required: false, default: undefined });
 
 const preFix = "VERACODE-HMAC-SHA-256";
 const verStr = "vcode_request_version_1";
@@ -129,18 +129,22 @@ async function run() {
                         "value": "Bearer " + token
                     },
                     {
-                        "title": "SystemAccount",
-                        "type": "HTTP_HEADER",
-                        "key": headerSystemAccountName,
-                        "value": headerSystemAccount
-                    },
-                    {
                         "title": "ScanHeader",
                         "type": "HTTP_HEADER",
                         "key": "x-veracode-scan",
                         "value": "true"
                     }
                 ]
+
+                if(headerSystemAccount && headerSystemAccountName) {
+                    paramData.push({
+                        "title": "SystemAccount",
+                        "type": "HTTP_HEADER",
+                        "key": headerSystemAccountName,
+                        "value": headerSystemAccount
+                    })
+                }
+
                 console.log('Updating auth parameters for analysis profile');
                 const response = await axios.put("https://"+`${host}${parameterUrl}`, paramData, {headers: {'Authorization': parameterHeaderAnalysisProfile}});
             } catch(error) {
